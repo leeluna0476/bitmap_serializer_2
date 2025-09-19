@@ -8,6 +8,7 @@
 #include "util.h"
 
 extern const char digits[10][8];
+extern const char alpha_s[26][8];
 
 #define BLACK 0x00
 #define WHITE 0xff
@@ -19,6 +20,9 @@ char	is_supported_char(char c, int di, int dj) {
 	char	ret = 0;
 	if (isdigit(c)) {
 		ret = (digits[c - '0'][di] >> (7 - dj)) & 1;
+	}
+	else if (islower(c)) {
+		ret = (alpha_s[c - 'a'][di] >> (7 - dj)) & 1;
 	}
 	return ret;
 }
