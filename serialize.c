@@ -15,6 +15,14 @@ extern const char digits[10][8];
 #define HORZ_SPACE 2
 #define VERT_SPACE 2
 
+char	is_supported_char(char c, int di, int dj) {
+	char	ret = 0;
+	if (isdigit(c)) {
+		ret = (digits[c - '0'][di] >> (7 - dj)) & 1;
+	}
+	return ret;
+}
+
 int	main() {
 	// 나중에 처음부터 2차원 배열로 받는 거로 바꿔볼까?
 	char	*whole_str = get_input_in_one_str();
@@ -130,9 +138,6 @@ int	main() {
 		}
 	}
 
-	// from here
-	
-	// letter_width, letter_height 활용.
 	int	wdiff = (letter_width - 8) / 2;
 	int	hdiff = (letter_height - 8) / 2;
 
@@ -165,16 +170,12 @@ int	main() {
 					_j = 0;
 				}
 				int dj = _j - wdiff; // -2 <= dj < 12
-				if (si < line_num) {
-					int digit = splitted_str[si][sj] - '0'; // hard-coded. change later.
-					if (di >= 0 && di < 8 && dj >= 0 && dj < 8
-							&& digit >= 0 && digit < 10
-							&& ((digits[digit][di] >> (7 - dj)) & 1)) {
-						pixel_data[i][j] = 0x00;
-					}
-					else {
-						pixel_data[i][j] = 0xff;
-					}
+				if (di >= 0 && di < 8 && dj >= 0 && dj < 8
+						&& is_supported_char(splitted_str[si][sj], di, dj)) {
+					pixel_data[i][j] = 0x00;
+				}
+				else {
+					pixel_data[i][j] = 0xff;
 				}
 				++_j;
 			}
@@ -187,8 +188,6 @@ int	main() {
 			++_i;
 		}
 	}
-
-	// to here
 
 	int fd = open("test.bmp", O_RDWR | O_CREAT, 0644);
 	if (fd < 0) {
