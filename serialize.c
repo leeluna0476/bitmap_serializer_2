@@ -9,6 +9,7 @@
 
 extern const char digits[10][8];
 extern const char alpha_s[26][8];
+extern const char punctuations[3][8];
 
 #define BLACK 0x00
 #define WHITE 0xff
@@ -24,6 +25,9 @@ char	is_supported_char(char c, int di, int dj) {
 	else if (islower(c)) {
 		ret = (alpha_s[c - 'a'][di] >> (7 - dj)) & 1;
 	}
+	else if (c >= ',' && c <= '.') {
+		ret = (punctuations[c - ','][di] >> (7 - dj)) & 1;
+	}
 	return ret;
 }
 
@@ -34,17 +38,15 @@ int	main() {
 		perror("malloc");
 		return 1;
 	}
-	int	len = strlen(whole_str); // 개행 포함.
 	char	**splitted_str = split(whole_str, '\n');
 	if (!splitted_str) {
 		free(whole_str);
 		perror("malloc");
 		return 1;
 	}
+
 	int	line_num = how_many_lines(splitted_str);
 	int	longest_len = longest_line_len(splitted_str); // 개행 미포함.
-
-	printf("longest_len: %d\n", longest_len);
 
 	int	letter_width = 12;
 	int	letter_height = 12;
@@ -148,6 +150,7 @@ int	main() {
 	int _i = 0;
 	int	_j = 0;
 	int si = -1;
+	char	pattern[2] = { 0x00, 0xff };
 	for (int i = 0; i < image_height; ++i) {
 		int	j;
 		for (j = 0; j < 2; ++j) {
@@ -168,26 +171,22 @@ int	main() {
 				++si;
 			}
 			int di = _i - hdiff;
+			int pidx;
 			for (; j < image_width - 2; ++j) { // 0 <= _j < 14
 				if (!(_j % letter_width)) {
-					++sj;
+					if (sj == -1 || sj < strlen(splitted_str[si]))
+						++sj;
 					_j = 0;
 				}
 				int dj = _j - wdiff; // -2 <= dj < 12
-				if (di >= 0 && di < 8 && dj >= 0 && dj < 8
-						&& is_supported_char(splitted_str[si][sj], di, dj)) {
-					pixel_data[i][j] = 0x00;
-				}
-				else {
-					pixel_data[i][j] = 0xff;
-				}
+				pidx = !(di >= 0 && di < 8 && dj >= 0 && dj < 8
+						&& is_supported_char(splitted_str[si][sj], di, dj));
+				pixel_data[i][j] = pattern[pidx];
 				++_j;
 			}
 			for (; j < padded_row_size; ++j) {
-				if (j < image_width)
-					pixel_data[i][j] = 0xff;
-				else
-					pixel_data[i][j] = 0x00;
+				pidx = j < image_width;
+				pixel_data[i][j] = pattern[pidx];
 			}
 			++_i;
 		}
