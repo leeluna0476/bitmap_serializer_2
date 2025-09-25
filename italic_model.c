@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-void	print_basic(char pattern[10][8]) {
-	for (int j = 0; j < 8; ++j) {
+void	print_basic(char pattern[10]) {
+	for (int j = 7; j >= 0; --j) {
 		for (int i = 9; i >= 0; --i) {
-			if (pattern[i][j])
+			if ((pattern[i] >> j) & 1)
 				printf("*");
 			else
 				printf(" ");
@@ -12,61 +12,26 @@ void	print_basic(char pattern[10][8]) {
 	}
 }
 
-void	print_italic(char pattern[10][8]) {
+void	print_italic(char pattern[10]) {
 	int	space = 1;
-	for (int j = 0; j < 8; ++j) {
+	for (int j = 7; j >= 0; --j) {
 		for (int i = 9; i >= 0; --i) {
 			int	check = i + space;
-			if (check >= 0 && check <= 9 && pattern[check][j])
+			if (check >= 0 && check <= 9 && (pattern[check] >> j) & 1)
 				printf("*");
 			else
 				printf(" ");
 		}
 		printf("\n");
-		if (j == 2 || j == 4)
+		if (j == 5 || j == 3)
 			--space;
 	}
 }
 
 int	main(void) {
-	char	one[10][8] = {
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 1, 1, 1, 1, 1, 1, 1 },
-		{ 1, 1, 1, 1, 1, 1, 1, 1 },
-		{ 0, 1, 0, 0, 0, 0, 0, 1 },
-		{ 0, 0, 1, 0, 0, 0, 0, 1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	};
-
-	char	zero[10][8] = {
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 1, 1, 1, 1, 1, 1, 0 },
-		{ 0, 1, 1, 1, 1, 1, 1, 0 },
-		{ 1, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 0, 0, 0, 0, 0, 0, 1 },
-		{ 1, 0, 0, 0, 0, 0, 0, 1 },
-		{ 0, 1, 1, 1, 1, 1, 1, 0 },
-		{ 0, 1, 1, 1, 1, 1, 1, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	};
-
-	char	two[10][8] = {
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 1, 1, 1, 1, 0, 0, 1 },
-		{ 0, 1, 1, 1, 1, 0, 0, 1 },
-		{ 1, 0, 0, 0, 1, 0, 0, 1 },
-		{ 1, 0, 0, 0, 1, 0, 0, 1 },
-		{ 1, 0, 0, 0, 1, 0, 0, 1 },
-		{ 1, 0, 0, 0, 1, 0, 0, 1 },
-		{ 0, 1, 1, 0, 1, 1, 1, 1 },
-		{ 0, 1, 1, 0, 1, 1, 1, 1 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-	};
+	char	one[10] = { 0x00, 0x01, 0x01, 0xff, 0xff, 0x41, 0x21, 0x00, 0x00 };
+	char	zero[10] = { 0x00, 0x7e, 0x7e, 0x81, 0x81, 0x81, 0x81, 0x7e, 0x7e, 0x00 };
+	char	two[10] = { 0x00, 0x79, 0x79, 0x89, 0x89, 0x89, 0x89, 0x6f, 0x6f, 0x00 };
 
 	print_basic(zero);
 	print_italic(zero);
