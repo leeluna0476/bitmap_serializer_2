@@ -7,28 +7,24 @@
 #include <ctype.h>
 #include "util.h"
 
+enum	format_e {
+	NORMAL = 0,
+	ITALIC,
+	BOLD,
+};
+
 extern const char digits[10][10];
 //extern const char alpha_s[26][8];
 //extern const char punctuations[3][8];
 int	letter_width = 10; // 나중에 sizeof로 바꾸기.
 int	letter_height = 8;
 
-#define HORZ_SPACE 2
-#define VERT_SPACE 2
-
-//char	is_supported_char(char c, int di, int dj) {
-//	char	ret = 0;
-//	if (isdigit(c)) {
-//		ret = (digits[c - '0'][di] >> (7 - dj)) & 1;
-//	}
-//	else if (islower(c)) {
-//		ret = (alpha_s[c - 'a'][di] >> (7 - dj)) & 1;
-//	}
-//	else if (c >= ',' && c <= '.') {
-//		ret = (punctuations[c - ','][di] >> (7 - dj)) & 1;
-//	}
-//	return ret;
-//}
+char	font_format(char c, int line, int shift, enum format_e format) {
+	char	ret = 0;
+	if (isdigit(c))
+		ret = (digits[c - '0'][line] >> shift) & 1;
+	return ret;
+}
 
 struct BmpInfoHeader	generate_info_header(int width, int height) {
 	struct BmpInfoHeader	info_header;
@@ -140,7 +136,8 @@ unsigned char	**generate_pixel_data(struct BmpInfoHeader *info_header, struct Bm
 				int	letter_i = i - (2 + (2 + letter_height) * line_i);
 				int	letter_j = j - (2 + letter_width * line_j);;
 				char	c = split_str[line_i][line_j];
-				pixel_data[i][j] = pattern[(digits[c - '0'][9 - letter_j] >> (7 - letter_i)) & 1];
+				pixel_data[i][j] = pattern[font_format(c, 9 - letter_j, 7 - letter_i, NORMAL)];
+//				pixel_data[i][j] = pattern[(digits[c - '0'][9 - letter_j] >> (7 - letter_i)) & 1];
 			}
 		}
 		// 줄간 공백은 이 쪽으로 이동.
@@ -172,7 +169,7 @@ int	main() {
 	int	longest_len = longest_line_len(split_str); // 개행 미포함.
 
 	int	image_width = longest_len * letter_width + 4;
-	int	image_height = line_num * letter_height + 4;
+	int	image_height = line_num * letter_height + (line_num - 1) * 2 + 4;
 
 
 	struct BmpInfoHeader	info_header = generate_info_header(image_width, image_height);
