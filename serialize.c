@@ -19,10 +19,19 @@ extern const char digits[10][10];
 int	letter_width = 10; // 나중에 sizeof로 바꾸기.
 int	letter_height = 8;
 
-char	font_format(char c, int line, int shift, enum format_e format) {
+char	extract_pattern(char c, int row, int column, enum format_e format) {
+	if (format == ITALIC) {
+		if (column < 3)
+			--row;
+		else if (column > 4)
+			++row;
+	}
+
 	char	ret = 0;
-	if (isdigit(c))
-		ret = (digits[c - '0'][line] >> shift) & 1;
+	if (row >= 0 && row <= 9) {
+		if (isdigit(c))
+			ret = (digits[c - '0'][row] >> column) & 1;
+	}
 	return ret;
 }
 
@@ -136,8 +145,7 @@ unsigned char	**generate_pixel_data(struct BmpInfoHeader *info_header, struct Bm
 				int	letter_i = i - (2 + (2 + letter_height) * line_i);
 				int	letter_j = j - (2 + letter_width * line_j);;
 				char	c = split_str[line_i][line_j];
-				pixel_data[i][j] = pattern[font_format(c, 9 - letter_j, 7 - letter_i, NORMAL)];
-//				pixel_data[i][j] = pattern[(digits[c - '0'][9 - letter_j] >> (7 - letter_i)) & 1];
+				pixel_data[i][j] = pattern[extract_pattern(c, 9 - letter_j, 7 - letter_i, ITALIC)];
 			}
 		}
 		// 줄간 공백은 이 쪽으로 이동.
