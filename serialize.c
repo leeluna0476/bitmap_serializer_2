@@ -143,7 +143,7 @@ unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struc
 					++line_j;
 				}
 				int	letter_i = i - (2 + (2 + letter_height) * line_i);
-				int	letter_j = j - (2 + letter_width * line_j);;
+				int	letter_j = j - (2 + letter_width * line_j);
 				char	c = split_str[line_i][line_j];
 				pixel_data[i][j] = pattern[extract_pattern(c, 9 - letter_j, 7 - letter_i, ITALIC)];
 			}
