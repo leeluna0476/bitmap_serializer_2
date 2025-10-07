@@ -35,10 +35,10 @@ char	extract_pattern(char c, int row, int column, enum format_e format) {
 	return ret;
 }
 
-struct BmpInfoHeader	generate_info_header(int width, int height) {
-	struct BmpInfoHeader	info_header;
+struct bmp_info_header_t	generate_info_header(int width, int height) {
+	struct bmp_info_header_t	info_header;
 
-	info_header.size = sizeof(struct BmpInfoHeader);
+	info_header.size = sizeof(struct bmp_info_header_t);
 	info_header.width = width;
 	info_header.height = height;
 	info_header.colour_plane = 1;
@@ -56,8 +56,8 @@ struct BmpInfoHeader	generate_info_header(int width, int height) {
 	return info_header;
 }
 
-struct BmpFileHeader	generate_file_header(struct BmpInfoHeader *info_header) {
-	struct BmpFileHeader	file_header;
+struct bmp_file_header_t	generate_file_header(struct bmp_info_header_t *info_header) {
+	struct bmp_file_header_t	file_header;
 
 	file_header.type = 0x4d42;
 	// file header size + info header size + palette size + pixel data
@@ -78,16 +78,16 @@ struct BmpFileHeader	generate_file_header(struct BmpInfoHeader *info_header) {
 	int	colour_table_size = info_header->colour_number << 2;
 	int	padded_matrix_size = info_header->height * padded_row_size;
 	file_header.size = \
-					   sizeof(struct BmpFileHeader) \
-					   + sizeof(struct BmpInfoHeader) \
+					   sizeof(struct bmp_file_header_t) \
+					   + sizeof(struct bmp_info_header_t) \
 					   + colour_table_size \
 					   + padded_matrix_size;
 
 	file_header.reserved_1 = 0;
 	file_header.reserved_2 = 0;
 	file_header.offbits = \
-						  sizeof(struct BmpFileHeader) \
-						  + sizeof(struct BmpInfoHeader) \
+						  sizeof(struct bmp_file_header_t) \
+						  + sizeof(struct bmp_info_header_t) \
 						  + colour_table_size;
 
 	return file_header;
@@ -108,8 +108,8 @@ unsigned char	*generate_colour_table(unsigned int colour_table_size) {
 	return colour_table;
 }
 
-unsigned char	**generate_pixel_data(struct BmpInfoHeader *info_header, struct BmpFileHeader *file_header, char **split_str, int line_num) {
-	int	padded_matrix_size = file_header->size - sizeof(struct BmpFileHeader) - sizeof(struct BmpInfoHeader) - (info_header->colour_number << 2);
+unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struct bmp_file_header_t *file_header, char **split_str, int line_num) {
+	int	padded_matrix_size = file_header->size - sizeof(struct bmp_file_header_t) - sizeof(struct bmp_info_header_t) - (info_header->colour_number << 2);
 	int	padded_row_size = padded_matrix_size / info_header->height;
 	unsigned char	**pixel_data = malloc(info_header->height * sizeof(unsigned char *));
 	if (!pixel_data)
@@ -180,8 +180,8 @@ int	main() {
 	int	image_height = line_num * letter_height + (line_num - 1) * 2 + 4;
 
 
-	struct BmpInfoHeader	info_header = generate_info_header(image_width, image_height);
-	struct BmpFileHeader	file_header = generate_file_header(&info_header);
+	struct bmp_info_header_t	info_header = generate_info_header(image_width, image_height);
+	struct bmp_file_header_t	file_header = generate_file_header(&info_header);
 	int	colour_table_size = info_header.colour_number << 2;
 	unsigned char	*colour_table = generate_colour_table(colour_table_size);
 	if (!colour_table) {
@@ -210,7 +210,7 @@ int	main() {
 	write(fd, &(info_header), sizeof(info_header));
 	write(fd, colour_table, colour_table_size);
 
-	int	padded_matrix_size = file_header.size - sizeof(struct BmpFileHeader) - sizeof(struct BmpInfoHeader) - (info_header.colour_number << 2);
+	int	padded_matrix_size = file_header.size - sizeof(struct bmp_file_header_t) - sizeof(struct bmp_info_header_t) - (info_header.colour_number << 2);
 	int	padded_row_size = padded_matrix_size / info_header.height;
 	for (int i = image_height - 1; i >= 0; --i) {
 		write(fd, pixel_data[i], padded_row_size);

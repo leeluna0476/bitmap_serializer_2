@@ -7,7 +7,7 @@
 
 #pragma pack(push, 1)
 // 14 bytes
-struct	BmpFileHeader
+struct	bmp_file_header_t
 {
 	uint16_t	type;		// The header field used to identify the BMP and DIB file is 0x42 0x4D in hexadecimal, same as BM in ASCII.
 	uint32_t	size;		// The size of the BMP file in bytes.
@@ -17,7 +17,7 @@ struct	BmpFileHeader
 };
 
 // 40 bytes
-struct	BmpInfoHeader
+struct	bmp_info_header_t
 {
 	uint32_t	size;					// the size of this header, in bytes (40)
 	int32_t		width;					// the bitmap width in pixels (signed integer)
