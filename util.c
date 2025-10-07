@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-char	*get_input_in_one_str() {
+char	*get_input_in_one_str(void) {
 	char	*input = NULL;
 	size_t	line_cap = 0;
 	ssize_t	line_len = 0;

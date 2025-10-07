@@ -18,7 +18,7 @@ typedef struct vector {
 	size_t	cap;
 } vec_t;
 
-char	*get_input_in_one_str();
+char	*get_input_in_one_str(void);
 void	term_print_digit(int digit, char *p);
 int		longest_line_len(char **strings);
 int		how_many_lines(char **strings);

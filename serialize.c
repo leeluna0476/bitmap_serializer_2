@@ -19,7 +19,7 @@ extern const char digits[10][10];
 int	letter_width = 10; // 나중에 sizeof로 바꾸기.
 int	letter_height = 8;
 
-char	extract_pattern(char c, int row, int column, enum format_e format) {
+int	extract_pattern(char c, int row, int column, enum format_e format) {
 	if (format == ITALIC) {
 		if (column < 3)
 			--row;
@@ -27,7 +27,7 @@ char	extract_pattern(char c, int row, int column, enum format_e format) {
 			++row;
 	}
 
-	char	ret = 0;
+	int	ret = 0;
 	if (row >= 0 && row <= 9) {
 		if (isdigit(c))
 			ret = (digits[c - '0'][row] >> column) & 1;
@@ -108,7 +108,7 @@ unsigned char	*generate_colour_table(unsigned int colour_table_size) {
 	return colour_table;
 }
 
-unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struct bmp_file_header_t *file_header, char **split_str, int line_num) {
+unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struct bmp_file_header_t *file_header, char **split_str) {
 	int	padded_matrix_size = file_header->size - sizeof(struct bmp_file_header_t) - sizeof(struct bmp_info_header_t) - (info_header->colour_number << 2);
 	int	padded_row_size = padded_matrix_size / info_header->height;
 	unsigned char	**pixel_data = malloc(info_header->height * sizeof(unsigned char *));
@@ -156,7 +156,7 @@ unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struc
 	return pixel_data;
 }
 
-int	main() {
+int	main(void) {
 	int ret = 0;
 	// 나중에 처음부터 2차원 배열로 받는 거로 바꿔볼까?
 	char	*whole_str = get_input_in_one_str();
@@ -191,7 +191,7 @@ int	main() {
 	}
 
 /////PIXEL//////DATA////////////////////////////////////
-	unsigned char	**pixel_data = generate_pixel_data(&info_header, &file_header, split_str, line_num);
+	unsigned char	**pixel_data = generate_pixel_data(&info_header, &file_header, split_str);
 	if (!pixel_data) {
 		perror("malloc");
 		ret = 1;
