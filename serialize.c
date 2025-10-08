@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bmp_file_format.h"
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include "bmp_file_format.h"
 #include "util.h"
 
 enum	format_e {
@@ -14,10 +14,15 @@ enum	format_e {
 };
 
 extern const char digits[10][10];
-//extern const char alpha_s[26][8];
-//extern const char punctuations[3][8];
-int	letter_width = 10; // 나중에 sizeof로 바꾸기.
+int	letter_width = sizeof(digits[0]);
 int	letter_height = 8;
+
+int	process_error(int condition, char *err_label) {
+	if (condition) {
+		perror(err_label);
+	}
+	return condition;
+}
 
 int	extract_pattern(char c, int row, int column, enum format_e format) {
 	if (format == ITALIC) {
@@ -35,12 +40,14 @@ int	extract_pattern(char c, int row, int column, enum format_e format) {
 	return ret;
 }
 
-struct bmp_info_header_t	generate_info_header(int width, int height) {
+struct bmp_info_header_t	generate_info_header(char **split_str) {
+	int	line_num = how_many_lines(split_str);
+
 	struct bmp_info_header_t	info_header;
 
 	info_header.size = sizeof(struct bmp_info_header_t);
-	info_header.width = width;
-	info_header.height = height;
+	info_header.width = longest_line_len(split_str) * letter_width + 4;
+	info_header.height = line_num * letter_height + (line_num - 1) * 2 + 4;
 	info_header.colour_plane = 1;
 	info_header.bits_per_pixel = BITS_DEFAULT;
 	// BI_RGB = 0. no compression.
@@ -93,9 +100,8 @@ struct bmp_file_header_t	generate_file_header(struct bmp_info_header_t *info_hea
 	return file_header;
 }
 
-unsigned char	*generate_colour_table(unsigned int colour_table_size) {
-	unsigned char	*colour_table = malloc(colour_table_size);
-	unsigned int	colour_number = colour_table_size >> 2;
+void	fill_in_colour_table(unsigned char *colour_table) {
+	unsigned int	colour_number = 1 << 8;
 	if (colour_table) {
 		for (unsigned short i = 0; i < colour_number; ++i) {
 			unsigned int	index = i << 2;
@@ -105,7 +111,6 @@ unsigned char	*generate_colour_table(unsigned int colour_table_size) {
 			colour_table[index + 3] = 0; // Reserved (항상 0)
 		}
 	}
-	return colour_table;
 }
 
 unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struct bmp_file_header_t *file_header, char **split_str) {
@@ -156,79 +161,46 @@ unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struc
 	return pixel_data;
 }
 
-int	main(void) {
-	int ret = 0;
-	// 나중에 처음부터 2차원 배열로 받는 거로 바꿔볼까?
-	char	*whole_str = get_input_in_one_str();
-	if (!whole_str) {
-		perror("malloc");
-		ret = 1;
-		goto DONE;
-	}
-	char	**split_str = split(whole_str, '\n');
-	free(whole_str);
-	if (!split_str) {
-		perror("malloc");
-		ret = 1;
-		goto DONE;
-	}
+int	print_data(char *filename, struct bmp_file_header_t *file_header, struct bmp_info_header_t *info_header, unsigned char *colour_table, unsigned char **pixel_data) {
+	int	fd = open(filename, O_RDWR | O_CREAT, 0644);
+	if (process_error(fd < 0, "open"))
+		return 1;
 
-	int	line_num = how_many_lines(split_str);
-	int	longest_len = longest_line_len(split_str); // 개행 미포함.
+	write(fd, file_header, sizeof(struct bmp_file_header_t));
+	write(fd, info_header, sizeof(struct bmp_info_header_t));
+	write(fd, colour_table, 1 << 10);
 
-	int	image_width = longest_len * letter_width + 4;
-	int	image_height = line_num * letter_height + (line_num - 1) * 2 + 4;
-
-
-	struct bmp_info_header_t	info_header = generate_info_header(image_width, image_height);
-	struct bmp_file_header_t	file_header = generate_file_header(&info_header);
-	int	colour_table_size = info_header.colour_number << 2;
-	unsigned char	*colour_table = generate_colour_table(colour_table_size);
-	if (!colour_table) {
-		perror("malloc");
-		ret = 1;
-		goto FREE_STRING;
-	}
-
-/////PIXEL//////DATA////////////////////////////////////
-	unsigned char	**pixel_data = generate_pixel_data(&info_header, &file_header, split_str);
-	if (!pixel_data) {
-		perror("malloc");
-		ret = 1;
-		goto FREE_COLOUR_TABLE;
-	}
-
-/////PRINT///////////////////////////////////////////////
-	int fd = open("test.bmp", O_RDWR | O_CREAT, 0644);
-	if (fd < 0) {
-		perror("open");
-		ret = 1;
-		goto FREE_PIXEL_DATA;
-	}
-
-	write(fd, &(file_header), sizeof(file_header));
-	write(fd, &(info_header), sizeof(info_header));
-	write(fd, colour_table, colour_table_size);
-
-	int	padded_matrix_size = file_header.size - sizeof(struct bmp_file_header_t) - sizeof(struct bmp_info_header_t) - (info_header.colour_number << 2);
-	int	padded_row_size = padded_matrix_size / info_header.height;
-	for (int i = image_height - 1; i >= 0; --i) {
+	int	padded_matrix_size = file_header->size - sizeof(struct bmp_file_header_t) - sizeof(struct bmp_info_header_t) - (info_header->colour_number << 2);
+	int	padded_row_size = padded_matrix_size / info_header->height;
+	for (int i = info_header->height - 1; i >= 0; --i) {
 		write(fd, pixel_data[i], padded_row_size);
 	}
-
 	close(fd);
-FREE_PIXEL_DATA:
-	for (int i = 0; i < image_height; ++i) {
-		free(pixel_data[i]);
-	}
-	free(pixel_data);
-FREE_COLOUR_TABLE:
-	free(colour_table);
-FREE_STRING:
-	for (int i = 0; split_str[i]; ++i) {
-		free(split_str[i]);
-	}
-	free(split_str);
-DONE:
-	return ret;
+
+	return 0;
+}
+
+int	main(void) {
+	// 나중에 처음부터 2차원 배열로 받는 거로 바꿔볼까?
+	char	*whole_str = get_input_in_one_str();
+	if (process_error(!whole_str, "malloc"))
+		return 1;
+
+	char	**split_str = split(whole_str, '\n');
+	free(whole_str);
+	if (process_error(!split_str, "malloc"))
+		return 1;
+
+	struct bmp_info_header_t	info_header = generate_info_header(split_str);
+	struct bmp_file_header_t	file_header = generate_file_header(&info_header);
+	unsigned char	colour_table[1 << 10];
+	fill_in_colour_table(colour_table);
+	unsigned char	**pixel_data = generate_pixel_data(&info_header, &file_header, split_str);
+	if (process_error(!pixel_data, "malloc"))
+		return 1;
+
+	if (!print_data("test.bmp", &file_header, &info_header, colour_table, pixel_data))
+		return 1;
+
+	return 0;
 }
