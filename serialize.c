@@ -25,7 +25,18 @@ int	process_error(int condition, char *err_label) {
 }
 
 int	extract_pattern(char c, int row, int column, enum format_e format) {
-	if (format == ITALIC) {
+	if (format == BOLD) {
+		if (row > 0 && row < 9) {
+			for (int k = row - 1; k < row + 2; ++k) {
+				if (isdigit(c)) {
+					if ((digits[c - '0'][k] >> column) & 1)
+						return 1;
+				}
+			}
+		}
+		return 0;
+	}
+	else if (format == ITALIC) {
 		if (column < 3)
 			--row;
 		else if (column > 4)
@@ -150,6 +161,7 @@ unsigned char	**generate_pixel_data(struct bmp_info_header_t *info_header, struc
 				int	letter_i = i - (2 + (2 + letter_height) * line_i);
 				int	letter_j = j - (2 + letter_width * line_j);
 				char	c = split_str[line_i][line_j];
+				// hard-coded. change later.
 				pixel_data[i][j] = pattern[extract_pattern(c, 9 - letter_j, 7 - letter_i, ITALIC)];
 			}
 		}
