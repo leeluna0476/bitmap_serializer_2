@@ -20,6 +20,7 @@ char	*get_input_in_one_str(void) {
 
 	while ((line_len = getdelim(&input, &line_cap, '\n', stdin)) > 0) {
 		if (!input) {
+			free(whole_str.p);
 			return NULL;
 		}
 
